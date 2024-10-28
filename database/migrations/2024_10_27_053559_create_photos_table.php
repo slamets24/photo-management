@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
             $table->string('file_path');
+            $table->json('face_descriptor');
             $table->timestamps();
         });
     }

@@ -11,6 +11,7 @@ class Photo extends Model
 
     protected $fillable = [
         'file_path',
+        'face_descriptor',
         'event_id'
     ];
 

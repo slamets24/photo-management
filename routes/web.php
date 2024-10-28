@@ -1,21 +1,25 @@
 <?php
 
+use App\Models\Photo;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FaceController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
+
 
 Route::get('/', function () {
     return view('welcome');
 });
 
 Route::get('/dashboard', function () {
-    return view('pages.dashboard.index');
+    $photos = Photo::all();
+    return view('pages.dashboard.index', compact('photos'));
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('events', EventController::class);
-
+    Route::post('/upload-images', [EventController::class, 'storeImages']);
     Route::post('/match-face', [FaceController::class, 'matchFace'])->name('match-face');
 });
 

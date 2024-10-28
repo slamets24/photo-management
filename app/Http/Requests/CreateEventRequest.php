@@ -27,6 +27,7 @@ class CreateEventRequest extends FormRequest
             'thumbnail' => 'required|image|mimes:jpeg,png,jpg|max:5048|',
             'pass_event' => 'required|string',
             'images.*' => 'image|mimes:jpeg,png,jpg|max:5048|',
+            'descriptors' => 'nullable|array',
         ];
         return $rules;
     }

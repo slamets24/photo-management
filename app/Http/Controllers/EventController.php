@@ -72,11 +72,14 @@ class EventController extends Controller
     public function storeImages($request, $event)
     {
         $images = $request->file("images");
-        foreach ($images as $image) {
+        foreach ($images as $index => $image) {
             $path = $image->storePublicly("photos", "public");
+
+            // Simpan file path dan face_descriptor ke database
             Photo::create([
                 'event_id' => $event->id,
-                'file_path' => $path
+                'file_path' => $path,
+                'face_descriptor' => json_encode($request->input("descriptors")[$index]) // Simpan sebagai JSON
             ]);
         }
     }

@@ -59,15 +59,86 @@
                         Masukan Foto <span class="text-red-500">*</span>
                     </label>
                     <div id="imagePreviewContainer" class="flex flex-wrap gap-5 mt-3"></div>
-                    <input type="file" accept="image/*" name="images[]" id="images" class="mt-3" multiple>
+                    <input type="file" name="images[]" id="images" accept="image/*" multiple
+                        onchange="handlePhotoUpload(event)" class="mt-3">
                     <x-partials.input-error :messages="$errors->get('images.')" />
                 </div>
             </div>
         </div>
-
         <button type="submit"
             class="flex justify-center w-full p-3 font-medium text-white rounded bg-gray-800 hover:bg-opacity-90">
             Kirim
         </button>
     </form>
+
+    <script>
+        async function loadModels() {
+            await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
+            await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+            await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+        }
+
+        async function handlePhotoUpload(event) {
+            const images = event.target.files;
+            const faceDescriptors = [];
+
+            for (let i = 0; i < images.length; i++) {
+                const img = await faceapi.bufferToImage(images[i]);
+                const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+
+                if (detection) {
+                    faceDescriptors.push({
+                        descriptor: detection.descriptor,
+                        file: images[i]
+                    });
+                } else {
+                    alert(`No face detected in image ${images[i].name}`);
+                }
+            }
+
+            // Hanya panggil upload jika ada deskriptor yang terdeteksi
+            if (faceDescriptors.length > 0) {
+                uploadImagesWithDescriptors(faceDescriptors);
+            } else {
+                alert('Tidak ada wajah terdeteksi di gambar yang diunggah.');
+            }
+        }
+
+
+        async function uploadImagesWithDescriptors(faceDescriptors) {
+            const formData = new FormData();
+            formData.append('event_id', ''); // Kosongkan atau atur ke ID event yang sesuai jika ada.
+
+            faceDescriptors.forEach((item, index) => {
+                formData.append(`images[${index}]`, item.file);
+                formData.append(`descriptors[${index}]`, JSON.stringify(item
+                    .descriptor)); // Pastikan ini ditambahkan
+            });
+
+            // Debug: Cetak semua field dalam formData
+            for (const [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
+            fetch('{{ route('events.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Images uploaded successfully');
+                    } else {
+                        alert('Upload failed');
+                    }
+                });
+        }
+
+        loadModels();
+    </script>
+
+
 </x-app-layout>
